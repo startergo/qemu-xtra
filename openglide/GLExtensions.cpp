@@ -264,7 +264,7 @@ void ValidateUserConfig( void )
                 if (index || InternalConfig.OGLVersion < 102)
                 {
                     char szError[ 256 ];
-                    sprintf( szError, "Severe Problem: OpenGL %s extension is required for OpenGLide!",
+                    snprintf( szError, sizeof(szError), "Severe Problem: OpenGL %s extension is required for OpenGLide!",
                         glNecessaryExt[ index ].name );
                     Error( szError );
                     GlideMsg( szError );
@@ -285,7 +285,7 @@ void ValidateUserConfig( void )
                 else
                 {
                     char szError[ 256 ];
-                    sprintf( szError, "Note: OpenGL %s extension is supported but disabled by user\n",
+                    snprintf( szError, sizeof(szError), "Note: OpenGL %s extension is supported but disabled by user\n",
                         glNecessaryExt[ index ].name );
                     GlideMsg( szError );
 
@@ -295,7 +295,7 @@ void ValidateUserConfig( void )
             else if ( ! OGLIsExtensionSupported( glNecessaryExt[ index ].name ) )
             {
                 char szError[ 256 ];
-                sprintf( szError, "Note: OpenGL %s extension is not supported, emulating behavior.\n", 
+                snprintf( szError, sizeof(szError), "Note: OpenGL %s extension is not supported, emulating behavior.\n", 
                     glNecessaryExt[ index ].name );
                 GlideMsg( szError );
             }
@@ -309,7 +309,7 @@ void ValidateUserConfig( void )
                 else
                 {
                     char szError[ 256 ];
-                    sprintf( szError, "Note: OpenGL %s extension is supported but disabled by user\n", 
+                    snprintf( szError, sizeof(szError), "Note: OpenGL %s extension is supported but disabled by user\n", 
                         glNecessaryExt[ index ].name );
                     GlideMsg( szError );
 

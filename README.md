@@ -1,4 +1,7 @@
 # QEMU Extras
+
+[![Build OpenGLide](https://github.com/startergo/qemu-xtra/actions/workflows/build.yml/badge.svg)](https://github.com/startergo/qemu-xtra/actions/workflows/build.yml)
+
 Old PC Games Addons for QEMU
 ## Content
     openglide - OpenGLide fork optimized for QEMU (Support Glide2x & Glide3x)
@@ -6,10 +9,25 @@ Old PC Games Addons for QEMU
     dosbox    - DOSBox SVN Games essentials
 
 ## Building OpenGLide
-    $ mkdir ~/myxtra && cd ~/myxtra
-    $ git clone https://github.com/kjliew/qemu-xtra.git
-    $ cd qemu-xtra/openglide
-    $ bash ./bootstrap
-    $ mkdir ../build && cd ../build
-    $ ../openglide/configure --disable-sdl && make
-    
+
+### Manual Build
+```bash
+$ mkdir ~/myxtra && cd ~/myxtra
+$ git clone https://github.com/startergo/qemu-xtra.git
+$ cd qemu-xtra/openglide
+$ bash ./bootstrap
+$ mkdir ../build && cd ../build
+$ ../openglide/configure --disable-sdl && make
+```
+
+### Automated Builds (CI/CD)
+
+This project includes GitHub Actions workflows that automatically build OpenGLide for multiple platforms:
+
+- **Linux** (Ubuntu 22.04, x86_64) - with and without SDL
+- **macOS** (x86_64 and ARM64) - with and without SDL  
+- **Windows** (MSYS2, x86_64 and i686) - MinGW builds
+
+Build artifacts are automatically generated for each platform and can be downloaded from the [Actions tab](https://github.com/startergo/qemu-xtra/actions).
+
+For detailed information about the CI system, see [.github/CI-README.md](.github/CI-README.md).

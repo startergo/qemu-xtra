@@ -1,0 +1,201 @@
+name: Build OpenGLide
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux builds
+          - name: "Linux x86_64 (Ubuntu 22.04)"
+            os: ubuntu-22.04
+            arch: x86_64
+            configure_flags: "--disable-sdl"
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y build-essential autotools-dev automake libtool 
+              sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxext-dev libxxf86vm-dev
+              sudo apt-get install -y pkg-config
+          
+          - name: "Linux x86_64 with SDL (Ubuntu 22.04)"
+            os: ubuntu-22.04
+            arch: x86_64
+            configure_flags: ""
+            install_deps: |
+              sudo apt-get update
+              sudo apt-get install -y build-essential autotools-dev automake libtool 
+              sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxext-dev libxxf86vm-dev
+              sudo apt-get install -y libsdl2-dev pkg-config
+          
+          # macOS builds
+          - name: "macOS x86_64 (macOS 12)"
+            os: macos-12
+            arch: x86_64
+            configure_flags: "--disable-sdl"
+            install_deps: |
+              brew install autoconf automake libtool pkg-config
+              brew install --cask xquartz || true
+          
+          - name: "macOS ARM64 (macOS 14)"
+            os: macos-14
+            arch: arm64
+            configure_flags: "--disable-sdl"
+            install_deps: |
+              brew install autoconf automake libtool pkg-config
+              brew install --cask xquartz || true
+          
+          - name: "macOS x86_64 with SDL (macOS 12)"
+            os: macos-12
+            arch: x86_64
+            configure_flags: ""
+            install_deps: |
+              brew install autoconf automake libtool pkg-config sdl2
+              brew install --cask xquartz || true
+          
+          # Windows builds
+          - name: "Windows x86_64 (MSYS2)"
+            os: windows-latest
+            arch: x86_64
+            configure_flags: "--disable-sdl"
+            install_deps: |
+              # MSYS2 setup is handled by the action
+            msys2_arch: mingw64
+            msys2_packages: >-
+              mingw-w64-x86_64-gcc
+              mingw-w64-x86_64-autotools
+              mingw-w64-x86_64-libtool
+              mingw-w64-x86_64-pkg-config
+              mingw-w64-x86_64-freeglut
+              mingw-w64-x86_64-glew
+          
+          - name: "Windows i686 (MSYS2)"
+            os: windows-latest
+            arch: i686
+            configure_flags: "--disable-sdl"
+            install_deps: |
+              # MSYS2 setup is handled by the action
+            msys2_arch: mingw32
+            msys2_packages: >-
+              mingw-w64-i686-gcc
+              mingw-w64-i686-autotools
+              mingw-w64-i686-libtool
+              mingw-w64-i686-pkg-config
+              mingw-w64-i686-freeglut
+              mingw-w64-i686-glew
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup MSYS2 (Windows only)
+      if: runner.os == 'Windows'
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msys2_arch }}
+        update: true
+        install: ${{ matrix.msys2_packages }}
+
+    - name: Install dependencies (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: ${{ matrix.install_deps }}
+
+    - name: Run bootstrap
+      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+      run: |
+        cd openglide
+        chmod +x bootstrap
+        ./bootstrap
+
+    - name: Create build directory
+      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+      run: mkdir -p build
+
+    - name: Configure
+      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+      run: |
+        cd build
+        ../openglide/configure ${{ matrix.configure_flags }}
+
+    - name: Build
+      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+      run: |
+        cd build
+        make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+
+    - name: Create artifact directory
+      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+      run: |
+        mkdir -p artifacts/${{ matrix.os }}-${{ matrix.arch }}
+        
+    - name: Copy build artifacts (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        cp .libs/libglide2x.* ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
+        cp .libs/libglide3x.* ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
+        cp libglide2x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
+        cp libglide3x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
+        ls -la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/
+
+    - name: Copy build artifacts (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        cd build
+        cp .libs/libglide2x.* ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
+        cp .libs/libglide3x.* ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
+        cp libglide2x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
+        cp libglide3x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
+        ls -la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: openglide-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.configure_flags != '' && 'no-sdl' || 'with-sdl' }}
+        path: artifacts/${{ matrix.os }}-${{ matrix.arch }}/
+        retention-days: 30
+
+  # Create a combined release artifact
+  create-release:
+    needs: build
+    if: github.event_name == 'push' && contains(github.ref, 'refs/heads/')
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: all-artifacts
+
+    - name: Display structure of downloaded files
+      run: ls -R all-artifacts
+
+    - name: Create release bundle
+      run: |
+        mkdir -p release
+        cd all-artifacts
+        for dir in */; do
+          if [ -d "$dir" ]; then
+            echo "Processing $dir"
+            mkdir -p "../release/${dir%/}"
+            cp -r "$dir"* "../release/${dir%/}/" || true
+          fi
+        done
+        cd ..
+        
+    - name: Upload combined artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: openglide-all-platforms
+        path: release/
+        retention-days: 90

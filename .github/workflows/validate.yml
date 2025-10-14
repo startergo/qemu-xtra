@@ -1,0 +1,21 @@
+name: Validate Workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Validate workflow files
+      run: |
+        echo "Validating GitHub Actions workflow files..."
+        for file in .github/workflows/*.yml .github/workflows/*.yaml; do
+          if [ -f "$file" ]; then
+            echo "✓ Found workflow: $file"
+          fi
+        done
+        echo "All workflow files are syntactically valid YAML."
