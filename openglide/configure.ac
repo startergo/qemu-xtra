@@ -127,11 +127,12 @@ case "$host" in
         ;;
 esac
 
-AC_OUTPUT(
-Makefile \
-sdk2_unix.h \
-platform/Makefile \
-platform/linux/Makefile \
-platform/sdl/Makefile \
-platform/windows/Makefile \
-)
+AC_CONFIG_FILES([
+Makefile
+sdk2_unix.h
+platform/Makefile
+platform/linux/Makefile
+platform/sdl/Makefile
+platform/windows/Makefile
+])
+AC_OUTPUT
