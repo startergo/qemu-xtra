@@ -43,8 +43,8 @@ jobs:
             arch: arm64
             configure_flags: "--disable-sdl"
             install_deps: |
-              brew install -q autoconf automake libtool 2>/dev/null || true
-              brew install --cask xquartz 2>/dev/null || true
+              brew install -q autoconf automake libtool
+              brew install --cask xquartz
           
           # Windows builds
           - name: "Windows x86_64 (MSYS2)"
@@ -189,8 +189,18 @@ jobs:
       run: |
         mkdir -p artifacts/${{ matrix.os }}-${{ matrix.arch }}
         
-    - name: Copy build artifacts (Linux/macOS)
-      if: runner.os != 'Windows'
+    - name: Copy build artifacts (macOS with proper structure)
+      if: runner.os == 'macOS'
+      run: |
+        cd build
+        # Create the proper directory structure for macOS - only dylib files needed
+        mkdir -p ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/opt/homebrew/lib
+        cp .libs/libglide2x*.dylib ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/opt/homebrew/lib/ || true
+        cp .libs/libglide3x*.dylib ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/opt/homebrew/lib/ || true
+        ls -la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/opt/homebrew/lib/
+
+    - name: Copy build artifacts (Linux)
+      if: runner.os == 'Linux'
       run: |
         cd build
         cp .libs/libglide2x.* ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
