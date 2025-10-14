@@ -14,8 +14,8 @@ jobs:
       matrix:
         include:
           # Linux builds
-          - name: "Linux x86_64 (Ubuntu 22.04)"
-            os: ubuntu-22.04
+          - name: "Linux x86_64"
+            os: ubuntu-latest
             arch: x86_64
             configure_flags: "--disable-sdl"
             install_deps: |
@@ -24,39 +24,21 @@ jobs:
               sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxext-dev libxxf86vm-dev
               sudo apt-get install -y pkg-config
           
-          - name: "Linux x86_64 with SDL (Ubuntu 22.04)"
-            os: ubuntu-22.04
-            arch: x86_64
-            configure_flags: ""
-            install_deps: |
-              sudo apt-get update
-              sudo apt-get install -y build-essential autotools-dev automake libtool 
-              sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxext-dev libxxf86vm-dev
-              sudo apt-get install -y libsdl2-dev pkg-config
-          
           # macOS builds
-          - name: "macOS x86_64 (macOS 12)"
-            os: macos-12
+          - name: "macOS x86_64 (macOS 15)"
+            os: macos-15-intel
             arch: x86_64
             configure_flags: "--disable-sdl"
             install_deps: |
               brew install autoconf automake libtool pkg-config
               brew install --cask xquartz || true
           
-          - name: "macOS ARM64 (macOS 14)"
-            os: macos-14
+          - name: "macOS ARM64 (macOS 15)"
+            os: macos-latest
             arch: arm64
             configure_flags: "--disable-sdl"
             install_deps: |
               brew install autoconf automake libtool pkg-config
-              brew install --cask xquartz || true
-          
-          - name: "macOS x86_64 with SDL (macOS 12)"
-            os: macos-12
-            arch: x86_64
-            configure_flags: ""
-            install_deps: |
-              brew install autoconf automake libtool pkg-config sdl2
               brew install --cask xquartz || true
           
           # Windows builds
@@ -109,31 +91,64 @@ jobs:
       if: runner.os != 'Windows'
       run: ${{ matrix.install_deps }}
 
-    - name: Run bootstrap
-      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+    - name: Run bootstrap (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
       run: |
         cd openglide
         chmod +x bootstrap
         ./bootstrap
 
-    - name: Create build directory
-      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+    - name: Run bootstrap (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd openglide
+        chmod +x bootstrap
+        ./bootstrap
+
+    - name: Create build directory (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
       run: mkdir -p build
 
-    - name: Configure
-      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+    - name: Create build directory (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: mkdir -p build
+
+    - name: Configure (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
       run: |
         cd build
         ../openglide/configure ${{ matrix.configure_flags }}
 
-    - name: Build
-      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+    - name: Configure (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        ../openglide/configure ${{ matrix.configure_flags }}
+
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
       run: |
         cd build
         make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
 
-    - name: Create artifact directory
-      shell: ${{ runner.os == 'Windows' && 'msys2 {0}' || 'bash' }}
+    - name: Build (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: |
+        cd build
+        make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+
+    - name: Create artifact directory (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        mkdir -p artifacts/${{ matrix.os }}-${{ matrix.arch }}
+
+    - name: Create artifact directory (Linux/macOS)
+      if: runner.os != 'Windows'
       run: |
         mkdir -p artifacts/${{ matrix.os }}-${{ matrix.arch }}
         
@@ -161,7 +176,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: openglide-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.configure_flags != '' && 'no-sdl' || 'with-sdl' }}
+        name: openglide-${{ matrix.os }}-${{ matrix.arch }}
         path: artifacts/${{ matrix.os }}-${{ matrix.arch }}/
         retention-days: 30
 
