@@ -43,8 +43,8 @@ jobs:
             arch: arm64
             configure_flags: "--disable-sdl"
             install_deps: |
-              brew install autoconf automake libtool pkgconf
-              brew install --cask xquartz || true
+              brew install -q autoconf automake libtool 2>/dev/null || true
+              brew install --cask xquartz 2>/dev/null || true
           
           # Windows builds
           - name: "Windows x86_64 (MSYS2)"
