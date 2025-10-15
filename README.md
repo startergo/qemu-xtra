@@ -31,3 +31,23 @@ This project includes GitHub Actions workflows that automatically build OpenGLid
 Build artifacts are automatically generated for each platform and can be downloaded from the [Actions tab](https://github.com/startergo/qemu-xtra/actions).
 
 For detailed information about the CI system, see [.github/CI-README.md](.github/CI-README.md).
+
+## Building G2Xwrap
+
+**Requires OpenGLide compiled first!**
+
+### Manual Build
+```bash
+$ mkdir ~/myxtra && cd ~/myxtra
+$ git clone https://github.com/startergo/qemu-xtra.git
+$ cd qemu-xtra/openglide
+$ bash ./bootstrap
+$ mkdir ../build && cd ../build
+$ ../openglide/configure --disable-sdl && make
+$ cd ../g2xwrap
+$ make
+```
+
+### Automated Builds (CI/CD)
+
+G2Xwrap is automatically built as part of the CI workflow for Windows platforms after OpenGLide compilation completes. The wrapper DLLs (`glide.dll` and `glide3x.dll`) are included in the Windows build artifacts.

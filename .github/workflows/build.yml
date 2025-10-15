@@ -209,6 +209,14 @@ jobs:
         cp libglide3x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
         ls -la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/
 
+    - name: Build G2Xwrap (Windows only)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        cd g2xwrap
+        make
+        ls -la *.dll || echo "No DLL files found"
+
     - name: Copy build artifacts (Windows)
       if: runner.os == 'Windows'
       shell: msys2 {0}
@@ -218,7 +226,10 @@ jobs:
         cp .libs/libglide3x.* ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
         cp libglide2x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
         cp libglide3x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
-        ls -la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/
+        cd ../g2xwrap
+        cp *.dll ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ 2>/dev/null || echo "No G2Xwrap DLL files to copy"
+        cd ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/
+        ls -la
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
