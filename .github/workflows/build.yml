@@ -50,7 +50,7 @@ jobs:
           - name: "Windows x86_64 (MSYS2)"
             os: windows-latest
             arch: x86_64
-            configure_flags: "--disable-sdl"
+            configure_flags: "--disable-sdl --enable-shared"
             install_deps: |
               # MSYS2 setup is handled by the action
             msys2_arch: mingw64
@@ -61,11 +61,12 @@ jobs:
               mingw-w64-x86_64-pkg-config
               mingw-w64-x86_64-freeglut
               mingw-w64-x86_64-glew
+              mingw-w64-x86_64-tools-git
           
           - name: "Windows x86 (i386) (MSYS2)"
             os: windows-latest
             arch: i386
-            configure_flags: "--disable-sdl"
+            configure_flags: "--disable-sdl --enable-shared"
             install_deps: |
               # MSYS2 setup is handled by the action
             msys2_arch: mingw32
@@ -76,6 +77,7 @@ jobs:
               mingw-w64-i686-pkg-config
               mingw-w64-i686-freeglut
               mingw-w64-i686-glew
+              mingw-w64-i686-tools-git
 
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -214,6 +216,9 @@ jobs:
       shell: msys2 {0}
       run: |
         cd g2xwrap
+        # Check if the required OpenGLide DLL was built
+        ls -la ../build/.libs/libglide2x*.dll
+        # Build G2Xwrap
         make
         ls -la *.dll || echo "No DLL files found"
 
