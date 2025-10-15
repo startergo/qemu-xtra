@@ -61,7 +61,6 @@ jobs:
               mingw-w64-x86_64-pkg-config
               mingw-w64-x86_64-freeglut
               mingw-w64-x86_64-glew
-              mingw-w64-x86_64-tools-git
           
           - name: "Windows x86 (i386) (MSYS2)"
             os: windows-latest
@@ -211,14 +210,14 @@ jobs:
         cp libglide3x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
         ls -la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/
 
-    - name: Build G2Xwrap (Windows only)
-      if: runner.os == 'Windows'
+    - name: Build G2Xwrap (Windows i386 only)
+      if: runner.os == 'Windows' && matrix.arch == 'i386'
       shell: msys2 {0}
       run: |
         cd g2xwrap
         # Check if the required OpenGLide DLL was built
         ls -la ../build/.libs/libglide2x*.dll
-        # Build G2Xwrap
+        # Build G2Xwrap (requires MINGW32 environment)
         make
         ls -la *.dll || echo "No DLL files found"
 
@@ -231,8 +230,11 @@ jobs:
         cp .libs/libglide3x.* ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
         cp libglide2x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
         cp libglide3x.la ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ || true
-        cd ../g2xwrap
-        cp *.dll ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ 2>/dev/null || echo "No G2Xwrap DLL files to copy"
+        # Copy G2Xwrap DLLs only for i386 builds (where they were built)
+        if [ "${{ matrix.arch }}" = "i386" ]; then
+          cd ../g2xwrap
+          cp *.dll ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/ 2>/dev/null || echo "No G2Xwrap DLL files to copy"
+        fi
         cd ../artifacts/${{ matrix.os }}-${{ matrix.arch }}/
         ls -la
 

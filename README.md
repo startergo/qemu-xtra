@@ -50,4 +50,6 @@ $ make
 
 ### Automated Builds (CI/CD)
 
-G2Xwrap is automatically built as part of the CI workflow for Windows platforms after OpenGLide compilation completes. The wrapper DLLs (`glide.dll` and `glide3x.dll`) are included in the Windows build artifacts.
+G2Xwrap is automatically built as part of the CI workflow for **Windows i386 (32-bit)** platforms after OpenGLide compilation completes. The wrapper DLLs (`glide.dll` and `glide3x.dll`) are included in the Windows i386 build artifacts.
+
+**Note:** G2Xwrap requires MINGW32 environment and is only compatible with 32-bit Windows builds.
